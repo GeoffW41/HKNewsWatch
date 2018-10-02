@@ -1,0 +1,9 @@
+venv
+*.pyc
+.DS_Store
+.env
+environment.yml
+app_org.py
+app_layout.py
+*.sav
+assets/*.ttc
