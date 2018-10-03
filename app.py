@@ -310,20 +310,19 @@ def _bidirection_score_ngrams(finder, score_fn, filter_fn):
     """Generates of (ngram, score) pairs as determined by the scoring
     function provided.
     """
-    for w1, w2 in finder.ngram_fd:
-        b12, b21 = filter_fn(w1, w2), filter_fn(w2, w1)
-        if b12 and b21:
+    for tup in finder.ngram_fd:
+        permutations = [(0, 1), (1, 0)]
+        filtereds = [filter_fn(tup[i], tup[j]) for i, j in permutations]
+        if all(filtereds):
             continue
 
         score = finder.score_ngram(score_fn, w1, w2)
-        if score is None
+        if score is None:
             continue
-          
-        if not b12:
-            yield (w1, w2), score
 
-        if not b21:
-            yield (w2, w1), score
+        for (i, j), filtered in zip(permutations, filtereds):
+            if not filtered:
+                yield (tup[i], tup[j]), score
                 
 def bidirection_score_ngrams(finder, score_fn, filter_fn):
     """Returns a sequence of (ngram, score) pairs ordered from highest to
