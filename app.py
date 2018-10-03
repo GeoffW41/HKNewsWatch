@@ -314,7 +314,6 @@ def get_collocation(keywords, source):
     word_filters = [word_filter_p1,word_filter_p2]
 
     filename = f"finder_{source}_trimmed.sav"
-    finder = pickle.load(open(filename, 'rb'))
     df_topk = pd.DataFrame()
     try:
         for i in range(2):
