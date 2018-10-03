@@ -305,32 +305,47 @@ def update_image(jsonified_data, n_intervals, job_id):
 
     return app.get_asset_url(image_filename)
 
+  
+def _bidirection_score_ngrams(finder, score_fn, filter_fn):
+    """Generates of (ngram, score) pairs as determined by the scoring
+    function provided.
+    """
+    for w1, w2 in finder.ngram_fd:
+        for tup in ((w1, w2), (w2, w1)):
+            if filter_fn(*tup):
+                continue
+            score = finder.score_ngram(score_fn, *tup)
+            if score is not None:
+                yield tup, score
+
+def bidirection_score_ngrams(finder, score_fn, filter_fn):
+    """Returns a sequence of (ngram, score) pairs ordered from highest to
+    lowest score, as determined by the scoring function provided.
+    """
+    return sorted(
+        _bidirection_score_ngrams(finder, score_fn, filter_fn), 
+        key=lambda t: (-t[1], t[0]),
+    )
+
 
 def get_collocation(keywords, source):
     bgm = BigramAssocMeasures()
 
-    word_filter_p1 = lambda w1,w2: (keywords not in (w2)) or (len(w1) < 2)
-    word_filter_p2 = lambda w1,w2: (keywords not in (w1)) or (len(w2) < 2)
-    word_filters = [word_filter_p1,word_filter_p2]
+    word_filter = lambda w1, w2: keywords != w1 or len(w2) < 2
 
     filename = f"finder_{source}_trimmed.sav"
-    df_topk = pd.DataFrame()
     try:
-        for i in range(2):
-            finder = pickle.load(open(filename, 'rb'))
-            finder.apply_ngram_filter(word_filters[i])
-            scorelist = [item for item in finder.score_ngrams(bgm.likelihood_ratio)]
-            word_pairs, scores = zip(*scorelist)
+        finder = pickle.load(open(filename, 'rb'))
+        scorelist = bidirection_score_ngrams(finder, bgm.likelihood_ratio, word_filter)
+        word_pairs, scores = zip(*scorelist)
+        key, asso = zip(*word_pairs)
 
-            if i == 0:
-                asso, key = zip(*word_pairs)
-            else:
-                key, asso = zip(*word_pairs)
-
-            df_topk = pd.concat([df_topk, pd.DataFrame({'Source': source,
-                                                       'Keyword': keywords,
-                                                       'Collocation': asso,
-                                                       'Score': scores})])
+        df_topk = pd.DataFrame({
+            'Source': source,
+            'Keyword': keywords,
+            'Collocation': asso,
+            'Score': scores,
+        })
 
         df_topk = df_topk.sort_values('Score', ascending=False)\
         .drop_duplicates('Collocation').reset_index(drop=True)[:80]
