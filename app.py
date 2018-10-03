@@ -311,15 +311,19 @@ def _bidirection_score_ngrams(finder, score_fn, filter_fn):
     function provided.
     """
     for w1, w2 in finder.ngram_fd:
-        if not filter_fn(w1, w2):
-            score = finder.score_ngram(score_fn, w1, w2)
-            if score is not None:
-                yield (w1, w2), score
+        b12, b21 = filter_fn(w1, w2), filter_fn(w2, w1)
+        if b12 and b21:
+            continue
 
-        if not filter_fn(w2, w1):
-            score = finder.score_ngram(score_fn, w1, w2)
-            if score is not None:
-                yield (w2, w1), score
+        score = finder.score_ngram(score_fn, w1, w2)
+        if score is None
+            continue
+          
+        if not b12:
+            yield (w1, w2), score
+
+        if not b21:
+            yield (w2, w1), score
                 
 def bidirection_score_ngrams(finder, score_fn, filter_fn):
     """Returns a sequence of (ngram, score) pairs ordered from highest to
