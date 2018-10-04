@@ -316,7 +316,7 @@ def _bidirection_score_ngrams(finder, score_fn, filter_fn):
         if all(filtereds):
             continue
 
-        score = finder.score_ngram(score_fn, w1, w2)
+        score = finder.score_ngram(score_fn, *tup)
         if score is None:
             continue
 
