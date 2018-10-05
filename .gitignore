@@ -5,3 +5,4 @@ venv
 environment.yml
 app_org.py
 app_layout.py
+assets/wordcloud*.png

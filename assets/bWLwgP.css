@@ -333,14 +333,32 @@ li {
 
 /* Tables
 –––––––––––––––––––––––––––––––––––––––––––––––––– */
-table {
-  border-collapse: collapse;
+@media (min-device-width: 300px) {
+  table {
+    border-collapse: collapse;
+    line-height: 5.0vw;
+    font-size: 3.0vw;
+  }
+}
+@media (min-device-width: 800px) {
+  table {
+    border-collapse: collapse;
+    line-height: 4.0vw;
+    font-size: 2.5vw;
+  }
+}
+@media (min-device-width: 800px) and (min-width: 800px){
+  table {
+    border-collapse: collapse;
+    line-height: 2.5vw;
+    font-size: 1.2vw;
+  }
 }
 th,
 td {
   padding: 1.2rem 1.5rem;
   text-align: left;
-  border-bottom: 1.0rem solid #E1E1E1; }
+  border-bottom: 0.1rem solid #E1E1E1; }
 th:first-child,
 td:first-child {
   padding-left: 0; }

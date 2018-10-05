@@ -143,8 +143,7 @@ app.layout = html.Div(
 
      html.Div([
         html.Div([
-            html.Div([
-                dcc.Graph(id='output-df', style={'width':'100%'})],
+            html.Div(id='output-df',
                      className='six columns u-full-width',
                      style={"border":'1px solid White'}),
             html.Div([
@@ -172,6 +171,7 @@ def update_search_method(search_method):
 # submit query here
 def submit_query(n_click, keyword, sourcechoice, search_method):
     print(n_click, keyword, sourcechoice, search_method)
+
     q = Queue(connection=conn)
     job_id = str(uuid.uuid4())
     job = q.enqueue_call(func=compare_sources,
@@ -186,7 +186,6 @@ def submit_query(n_click, keyword, sourcechoice, search_method):
     [Input('update-interval', 'n_intervals')],
     [State('job-id', 'children')])
 def check_results(n_intervals, job_id):
-
     q = Queue(connection=conn)
     job = q.fetch_job(job_id)
     if job is not None:
@@ -241,14 +240,14 @@ def update_status(n_intervals, job_id, sourcechoice):
         message = '準備中...'
         return create_button(message=message, classname="button")
 
-@app.callback(Output('output-df','figure'),
+@app.callback(Output('output-df','children'),
              [Input('intermediate-value','children'),
               Input('update-interval', 'n_intervals')])
 def update_df(jsonified_data, n_intervals):
     df_collocation = pd.DataFrame()
     if jsonified_data == 'None':
         df_prepare = pd.DataFrame({'準備中...':np.tile(' ',15)})
-        table_figure = ff.create_table(df_prepare)
+        table_figure = generate_table(df_prepare)
         return table_figure
     else:
         result_dict = json.loads(jsonified_data)
@@ -268,10 +267,10 @@ def update_df(jsonified_data, n_intervals):
                                'wwp':'文匯報'}, axis=1, inplace=True)
         if (df_collocation.isnull().sum().sum()/df_collocation.size) > 0.8:
             df_nodata = pd.DataFrame({'數據不足，請嘗試其他關鍵詞。':np.tile(' ',15)})
-            table_figure = ff.create_table(df_nodata)
+            table_figure = generate_table(df_nodata)
             return table_figure
         df_collocation.fillna('無效', inplace=True)
-        table_figure = ff.create_table(df_collocation)
+        table_figure = generate_table(df_collocation)
         return table_figure
 
 @app.callback(Output('wordcloud','src'),
@@ -305,7 +304,7 @@ def update_image(jsonified_data, n_intervals, job_id):
 
     return app.get_asset_url(image_filename)
 
-  
+
 def _bidirection_score_ngrams(finder, score_fn, filter_fn):
     """Generates of (ngram, score) pairs as determined by the scoring
     function provided.
@@ -323,13 +322,13 @@ def _bidirection_score_ngrams(finder, score_fn, filter_fn):
         for (i, j), filtered in zip(permutations, filtereds):
             if not filtered:
                 yield (tup[i], tup[j]), score
-                
+
 def bidirection_score_ngrams(finder, score_fn, filter_fn):
     """Returns a sequence of (ngram, score) pairs ordered from highest to
     lowest score, as determined by the scoring function provided.
     """
     return sorted(
-        _bidirection_score_ngrams(finder, score_fn, filter_fn), 
+        _bidirection_score_ngrams(finder, score_fn, filter_fn),
         key=lambda t: (-t[1], t[0]),
     )
 
@@ -384,6 +383,18 @@ def create_wordcloud(freq_counter, sources, keyword):
     img = w.generate_from_frequencies(freq_counter)
     img.to_file(image_directory+image_filename)
     return image_filename
+
+def generate_table(dataframe, max_rows=15):
+    return html.Table(
+        # Header
+        [html.Tr([html.Th(col) for col in dataframe.columns])] +
+
+        # Body
+        [html.Tr([
+            html.Td(dataframe.iloc[i][col]) for col in dataframe.columns
+        ]) for i in range(min(len(dataframe), max_rows))],
+        className="table u-full-width"
+    )
 
 if __name__ == '__main__':
     app.run_server(debug=True)
