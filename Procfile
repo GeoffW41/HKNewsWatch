@@ -1,2 +1,2 @@
-web: gunicorn app:server --timeout 45
+web: newrelic-admin run-program gunicorn app:server
 worker: python worker.py
